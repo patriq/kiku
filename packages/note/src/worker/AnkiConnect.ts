@@ -1,3 +1,4 @@
+import { normalizeAnkiNotes } from "#/src/lib/migaku";
 import { parseRelatedExpression } from "#/src/lib/parse-related-expression";
 import type { AnkiNote } from "#/src/lib/types";
 import type { MainThreadApi } from "./MainThreadApi";
@@ -35,12 +36,13 @@ export class AnkiConnect {
   }
 
   async batchNotesInfo(noteIdsList: number[][]) {
-    return (await this.invoke("multi", {
+    const noteBatches = (await this.invoke("multi", {
       actions: noteIdsList.map((ids) => ({
         action: "notesInfo",
         params: { notes: ids },
       })),
     })) as Array<AnkiNote[]>;
+    return noteBatches.map(normalizeAnkiNotes);
   }
 
   async queryFieldContains({
@@ -109,11 +111,6 @@ export class AnkiConnect {
       });
     }
 
-    return {
-      kanjiListResult,
-      readingListResult,
-      expressionListResult,
-      newNotes,
-    };
+    return { kanjiListResult, readingListResult, expressionListResult, newNotes };
   }
 }

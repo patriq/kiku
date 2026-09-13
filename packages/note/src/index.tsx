@@ -30,6 +30,7 @@ import { constants } from "./lib/contants.ts";
 import { defaultConfig } from "./lib/default-config.ts";
 import { exampleFields } from "./lib/examples.ts";
 import { isNsfw } from "./lib/util.ts";
+import { normalizeAnkiFields } from "./lib/migaku.ts";
 import { Logger } from "./lib/logger.ts";
 import {
   type AnkiDroidAPI,
@@ -458,7 +459,7 @@ export class KikuHostAnki extends KikuHost {
     }
   }
 
-  getAnkiFields() {
+  getAnkiFields(): AnkiFields {
     const ankiFieldsTemplate = document.querySelector("#anki-fields");
     let templates: NodeListOf<HTMLTemplateElement> | HTMLTemplateElement[] | undefined =
       ankiFieldsTemplate instanceof HTMLTemplateElement
@@ -472,12 +473,15 @@ export class KikuHostAnki extends KikuHost {
         return fieldTemplate;
       });
     }
-    const ankiFields = templates
-      ? Object.fromEntries(
-          Array.from(templates).map((el) => [el.dataset.field, el.innerHTML.trim()]),
-        )
-      : ankiFieldsSkeleton;
-    return ankiFields;
+    if (!templates) return ankiFieldsSkeleton;
+
+    const ankiFields = {
+      ...ankiFieldsSkeleton,
+      ...Object.fromEntries(
+        Array.from(templates).map((el) => [el.dataset.field, el.innerHTML.trim()]),
+      ),
+    };
+    return normalizeAnkiFields(ankiFields);
   }
 
   setupDevCss(styleTags: HTMLStyleElement[], config: KikuConfig | undefined) {

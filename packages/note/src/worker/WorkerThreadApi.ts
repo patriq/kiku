@@ -2,6 +2,7 @@ import "#/src/lib/polyfill";
 import type { KikuConfig } from "#/src/lib/config";
 import type { Constants } from "#/src/lib/contants";
 import { parseRelatedExpression } from "#/src/lib/parse-related-expression";
+import { normalizeAnkiNotes } from "#/src/lib/migaku";
 import type {
   AnkiFields,
   AnkiNote,
@@ -75,7 +76,8 @@ export class WorkerThreadApi {
           if (this.chunkCache.has(chunk.file)) return;
           const buf = await this.main.fetchArrayBuffer(`${this.assetsPath}/${chunk.file}`);
           const text = await gunzipArrayBuffer(buf).text();
-          this.chunkCache.set(chunk.file, JSON.parse(text) as AnkiNote[]);
+          const notes = JSON.parse(text) as AnkiNote[];
+          this.chunkCache.set(chunk.file, normalizeAnkiNotes(notes));
         }),
       );
 
@@ -125,12 +127,7 @@ export class WorkerThreadApi {
         }
       }
 
-      return {
-        kanjiListResult,
-        readingListResult,
-        expressionListResult,
-        newNotes,
-      };
+      return { kanjiListResult, readingListResult, expressionListResult, newNotes };
     };
 
     let result: {
