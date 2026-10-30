@@ -378,8 +378,12 @@ function transformTextNodes(text: string, render: (part: MigakuSyntaxPart) => st
   const parts = splitFieldHtml(text);
   const fieldText = parts.filter((part) => !part.startsWith("<")).join("");
 
-  // Ignore field if it doesn't contain syntax
-  const syntaxTestPattern = /[{}[\]]/u;
+  // Ignore field if it doesn't contain actual Migaku/Yomitan Japanese annotation
+  // patterns (curly-brace spans, bracket furigana with surrounding text,
+  // or pitch-accent markers like [a2]). Standalone brackets in dictionary
+  // metadata (e.g. "JMdict [2026-10-06]") must not trigger transformation.
+  const syntaxTestPattern =
+    /\{[^}]*\}|\S\[|\]\S|[,{;][^\]]*\]/u;
   if (!syntaxTestPattern.test(fieldText)) {
     return text;
   }
@@ -501,13 +505,8 @@ function hasMigakuSyntax(text: string) {
 
 function containsMigakuSyntax(fields: AnkiFields) {
   return [
-    fields.Expression,
     fields.ExpressionFurigana,
-    fields.Sentence,
     fields.SentenceFurigana,
-    fields.MainDefinition,
-    fields.Glossary,
-    fields.MiscInfo,
   ].some(hasMigakuSyntax);
 }
 
